@@ -4,10 +4,17 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
 def load_device_data_for_interval(device_id, start_time, end_time):
-    """Load data for a specific device and time interval"""
-    df = pd.read_csv(f'data/device_{device_id + 1}.csv')
+    """Load data for a specific device and time interval
     
-    # Filter for the 5-second interval (should get 10 rows - every 0.5s)
+    Args:
+        device_id: Device ID (0-5 for peer_1 to peer_6)
+        start_time: Start timestamp
+        end_time: End timestamp
+    """
+    # Map device_id to peer file (device 0 -> peer_1, device 1 -> peer_2, etc.)
+    df = pd.read_csv(f'data/peer_{device_id + 1}_datapts.csv')
+    
+    # Filter for the time interval
     interval_data = df[(df['timestamp'] >= start_time) & (df['timestamp'] < end_time)]
     
     return interval_data
@@ -17,7 +24,7 @@ def create_validation_dataset():
     all_data = []
     
     for device_id in range(6):
-        df = pd.read_csv(f'data/device_{device_id + 1}.csv')
+        df = pd.read_csv(f'data/peer_{device_id + 1}_datapts.csv')
         # Sample 5% of data from each device
         sampled_data = df.sample(frac=0.05, random_state=42)
         all_data.append(sampled_data)

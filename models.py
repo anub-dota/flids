@@ -37,6 +37,14 @@ class LightweightModel:
             X_scaled = self.scaler.transform(X)
             self.model.partial_fit(X_scaled, y, classes=classes)
     
+    def fit(self, X, y):
+        """Train model on initial data"""
+        classes = np.array([0, 1])  # Binary classification
+        
+        X_scaled = self.scaler.fit_transform(X)
+        self.model.partial_fit(X_scaled, y,classes=classes)
+        self.is_fitted = True
+
     def predict(self, X):
         """Make predictions"""
         if not self.is_fitted:
@@ -70,7 +78,7 @@ class HeavyweightModel:
             hidden_layer_sizes=(64, 32),
             random_state=42,
             max_iter=200,
-            warm_start=True,  # Enable incremental learning
+            warm_start=False,  # Enable incremental learning
             early_stopping=False,  # Disable early stopping for incremental learning
             learning_rate_init=0.001,
             alpha=0.0001  # L2 regularization
@@ -83,12 +91,20 @@ class HeavyweightModel:
         if not self.is_fitted:
             # First training - fit scaler and initialize model
             X_scaled = self.scaler.fit_transform(X)
-            self.model.fit(X_scaled, y)
+            self.model.partial_fit(X_scaled, y)
             self.is_fitted = True
         else:
             # True incremental training - warm_start allows model to continue learning
             X_scaled = self.scaler.transform(X)
-            self.model.fit(X_scaled, y)  # With warm_start=True, this fine-tunes existing weights
+            self.model.partial_fit(X_scaled, y)
+    
+    def fit(self, X, y):
+        """Train model on initial data"""
+        classes = np.array([0, 1])  # Binary classification
+        
+        X_scaled = self.scaler.fit_transform(X)
+        self.model.partial_fit(X_scaled, y,classes=classes)
+        self.is_fitted = True
     
     def predict(self, X):
         """Make predictions"""
@@ -132,7 +148,7 @@ class GlobalModel:
                 hidden_layer_sizes=(64, 32),
                 random_state=42,
                 max_iter=200,
-                warm_start=True
+                warm_start=False
             )
         self.scaler = StandardScaler()
         self.is_fitted = False
@@ -214,6 +230,18 @@ class GlobalModel:
     
     def fit_from_teacher(self, X, teacher_labels):
         """Train this model using teacher model labels"""
+        
         X_scaled = self.scaler.fit_transform(X) if not self.is_fitted else self.scaler.transform(X)
-        self.model.partial_fit(X_scaled, teacher_labels)
-        self.is_fitted = True
+        
+        if self.model_type == 'lightweight':
+            # SGDClassifier supports partial_fit with classes parameter
+            classes = np.array([0, 1])
+            if not self.is_fitted:
+                self.model.partial_fit(X_scaled, teacher_labels, classes=classes)
+                self.is_fitted = True
+            else:
+                self.model.partial_fit(X_scaled, teacher_labels)
+        else:
+            # MLPClassifier with warm_start - use fit instead
+            self.model.partial_fit(X_scaled, teacher_labels)
+            self.is_fitted = True
