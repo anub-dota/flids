@@ -153,7 +153,7 @@ class IoTDevice:
                 self.traffic_log.append(LogEntry.convert_to_log_entry(pkt, 'received', self.infected, queue_full_percentage))
                 # print(f"[{self.env.now:>5.2f}] {self.name} processed {pkt.type} from {pkt.src}:{pkt.src_port}")
             else:
-                yield self.env.timeout(0.1)
+                yield self.env.timeout(0.05)
 
     # --- NORMAL BEHAVIOR PROTOCOLS ---
 
@@ -282,7 +282,7 @@ env = simpy.Environment()
 device_configs = {
     'Server': {
         'ports': [80, 443, 8080], 
-        'queue_size': 50, 
+        'queue_size': 200, 
         'process_delay': 0.1,
         'behaviors': {
             'heartbeat': False,  # Server doesn't need to send heartbeats
@@ -304,7 +304,7 @@ for i in range(1, 7):
     
     device_configs[f'peer_{i}'] = {
         'ports': [80, 443] + random.sample(range(1024, 65535), 3),
-        'queue_size': 15, 
+        'queue_size': 100, 
         'process_delay': 0.2,
         'behaviors': behaviors
     }
