@@ -145,10 +145,10 @@ class IoTDevice:
                 # --- Server-specific responses for TCP-like protocol ---
                 if self.name == 'Server' and not self.infected:
                     if pkt.type == 'SYN':
-                        self.send_packet(pkt.src, pkt.src_port, 'SYN-ACK', 60)
-                    elif pkt.type == 'DATA_REQ':
+                        self.send_packet(pkt.src, pkt.src_port, 'ACK', 60)
+                    elif pkt.type == 'TCP':
                         # Send back a larger data response
-                        self.send_packet(pkt.src, pkt.src_port, 'DATA_RESP', 1024)
+                        self.send_packet(pkt.src, pkt.src_port, 'TCP', 1024)
                 
                 self.traffic_log.append(LogEntry.convert_to_log_entry(pkt, 'received', self.infected, queue_full_percentage))
                 # print(f"[{self.env.now:>5.2f}] {self.name} processed {pkt.type} from {pkt.src}:{pkt.src_port}")
@@ -161,7 +161,7 @@ class IoTDevice:
         """1. Sends a small, periodic heartbeat packet to the server."""
         while True:
             if not self.infected:
-                self.send_packet("Server", 443, 'heartbeat', 32)
+                self.send_packet("Server", 443, 'UDP', 32)
             yield self.env.timeout(random.uniform(15, 20))
 
     def run_datarequest_protocol(self):
@@ -174,16 +174,16 @@ class IoTDevice:
                 yield self.env.timeout(0.2)
                 # Simulate requesting and receiving multiple data chunks
                 for _ in range(random.randint(1, 4)):
-                    self.send_packet("Server", 8080, 'DATA_REQ', 128)
+                    self.send_packet("Server", 8080, 'TCP', 128)
                     yield self.env.timeout(random.uniform(0.3, 0.8))
-                self.send_packet("Server", 8080, 'FIN', 60)
+                self.send_packet("Server", 8080, 'TCP', 60) #fin
             yield self.env.timeout(random.uniform(25, 40))
 
     def run_udp_protocol(self):
         """3. Sends occasional, one-off UDP-like packets with generic data."""
         while True:
             if not self.infected:
-                self.send_packet("Server", 8080, 'udp_generic', random.randint(100, 256))
+                self.send_packet("Server", 8080, 'UDP', random.randint(100, 256))
             yield self.env.timeout(random.uniform(10, 15))
 
     def run_streaming_protocol(self):
@@ -196,7 +196,7 @@ class IoTDevice:
                 # Stream consists of many small, regularly-timed packets
                 for _ in range(random.randint(40, 80)):
                     if self.infected: break # Stop if infected mid-stream
-                    self.send_packet("Server", 443, 'stream_frag', 1024)
+                    self.send_packet("Server", 443, 'UDP', 1024)
                     yield self.env.timeout(0.05) # Low jitter
     
     def run_p2p_chatter(self):
@@ -206,7 +206,7 @@ class IoTDevice:
                 # Select any peer (server can talk to any peer, peers can talk to server or other peers)
                 target_peer = random.choice(self.peers)
                 target_port = random.choice(list(target_peer.enabled_ports))
-                self.send_packet(target_peer.name, target_port, 'p2p_coord', 64)
+                self.send_packet(target_peer.name, target_port, 'UDP', 64)
             yield self.env.timeout(random.uniform(8, 18))
 
     def run_firmware_updates(self):
@@ -219,7 +219,7 @@ class IoTDevice:
                 print(f"[{self.env.now:>5.2f}] {self.name} starting firmware update to {target_peer.name}.")
                 # Send a burst of large packets
                 for i in range(20):
-                    self.send_packet(target_peer.name, 443, 'fw_fragment', 1400)
+                    self.send_packet(target_peer.name, 443, 'TCP', 1400)
                     yield self.env.timeout(0.02)
 
     # --- ATTACK LOGIC ---
@@ -243,7 +243,7 @@ class IoTDevice:
                     print(f"[{self.env.now:>5.2f}] [ATTACK] {self.name} starting default burst attack.")
                     while self.infected:
                         target = random.choice(self.all_devices)
-                        self.send_packet(target.name, 80, 'malware', 500)
+                        self.send_packet(target.name, 80, 'UDP', 500)
                         yield self.env.timeout(random.uniform(0.1, 0.5))
             yield self.env.timeout(1) # Check infection status every second
 
