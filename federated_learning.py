@@ -154,37 +154,65 @@ class FederatedIntrustionDetection:
         
         X_val, y_val = preprocess_data(self.validation_data)
         
-        # Evaluate local lightweight models (average across devices)
-        lightweight_preds = []
+        # Evaluate local lightweight models (calculate accuracy for each model first)
+        light_accs = []
+        light_precs = []
+        light_recs = []
+        light_f1s = []
+        
         for model in self.lightweight_models:
             if model.is_fitted:
                 preds = model.predict(X_val)
-                lightweight_preds.append(preds)
+                # Calculate metrics for each model individually
+                model_acc = accuracy_score(y_val, preds)
+                model_prec = precision_score(y_val, preds, zero_division=0)
+                model_rec = recall_score(y_val, preds, zero_division=0)
+                model_f1 = f1_score(y_val, preds, zero_division=0)
+                
+                # Add to metrics lists
+                light_accs.append(model_acc)
+                light_precs.append(model_prec)
+                light_recs.append(model_rec)
+                light_f1s.append(model_f1)
+                print(f"    Lightweight model {model.device_id}: acc={model_acc:.3f}, prec={model_prec:.3f}, rec={model_rec:.3f}, f1={model_f1:.3f}")
         
-        if lightweight_preds:
-            # Average predictions (ensemble)
-            avg_light_preds = np.round(np.mean(lightweight_preds, axis=0)).astype(int)
-            light_acc = accuracy_score(y_val, avg_light_preds)
-            light_prec = precision_score(y_val, avg_light_preds, zero_division=0)
-            light_rec = recall_score(y_val, avg_light_preds, zero_division=0)
-            light_f1 = f1_score(y_val, avg_light_preds, zero_division=0)
+        if light_accs:
+            # Average the metrics across models
+            light_acc = np.mean(light_accs)
+            light_prec = np.mean(light_precs)
+            light_rec = np.mean(light_recs)
+            light_f1 = np.mean(light_f1s)
         else:
             light_acc = light_prec = light_rec = light_f1 = 0.0
         
-        # Evaluate local heavyweight models (average across devices)
-        heavyweight_preds = []
+        # Evaluate local heavyweight models (calculate accuracy for each model first)
+        heavy_accs = []
+        heavy_precs = []
+        heavy_recs = []
+        heavy_f1s = []
+        
         for model in self.heavyweight_models:
             if model.is_fitted:
                 preds = model.predict(X_val)
-                heavyweight_preds.append(preds)
+                # Calculate metrics for each model individually
+                model_acc = accuracy_score(y_val, preds)
+                model_prec = precision_score(y_val, preds, zero_division=0)
+                model_rec = recall_score(y_val, preds, zero_division=0)
+                model_f1 = f1_score(y_val, preds, zero_division=0)
+                
+                # Add to metrics lists
+                heavy_accs.append(model_acc)
+                heavy_precs.append(model_prec)
+                heavy_recs.append(model_rec)
+                heavy_f1s.append(model_f1)
+                print(f"    Heavyweight model {model.device_id}: acc={model_acc:.3f}, prec={model_prec:.3f}, rec={model_rec:.3f}, f1={model_f1:.3f}")
         
-        if heavyweight_preds:
-            # Average predictions (ensemble)
-            avg_heavy_preds = np.round(np.mean(heavyweight_preds, axis=0)).astype(int)
-            heavy_acc = accuracy_score(y_val, avg_heavy_preds)
-            heavy_prec = precision_score(y_val, avg_heavy_preds, zero_division=0)
-            heavy_rec = recall_score(y_val, avg_heavy_preds, zero_division=0)
-            heavy_f1 = f1_score(y_val, avg_heavy_preds, zero_division=0)
+        if heavy_accs:
+            # Average the metrics across models
+            heavy_acc = np.mean(heavy_accs)
+            heavy_prec = np.mean(heavy_precs)
+            heavy_rec = np.mean(heavy_recs)
+            heavy_f1 = np.mean(heavy_f1s)
         else:
             heavy_acc = heavy_prec = heavy_rec = heavy_f1 = 0.0
         
@@ -241,7 +269,7 @@ class FederatedIntrustionDetection:
             if key in self.training_history:
                 self.training_history[key].append(value)
     
-    def run_simulation(self, total_seconds=1000):
+    def run_simulation(self, total_seconds=6000):
         """Run the complete federated learning simulation"""
         print(f"Starting federated learning simulation for {total_seconds} seconds...")
         print(f"Total rounds: {total_seconds // 5}")

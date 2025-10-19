@@ -167,7 +167,7 @@ def main():
     fed_system = FederatedIntrustionDetection()
     
     # Run simulation (you can adjust total_seconds based on your data)
-    history = fed_system.run_simulation(total_seconds=1000)  # Start with 100 seconds for testing
+    history = fed_system.run_simulation(total_seconds=6000)  # Start with 100 seconds for testing
     
     # Plot results
     if history['round']:  # Only plot if we have data

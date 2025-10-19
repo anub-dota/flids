@@ -6,6 +6,9 @@ import os
 
 Packet = namedtuple('Packet', ['timestamp', 'src', 'src_port', 'dst', 'dst_port', 'type', 'size'])
 
+# Global flag to track if the system is currently under attack
+system_under_attack = False
+
 # --- LogEntry Class (Unchanged) ---
 class LogEntry:
     def __init__(self, timestamp, src, src_port, dst, dst_port, type, size, infected, queue_full_percentage=0):
@@ -103,6 +106,8 @@ class IoTDevice:
         self.all_devices = [dev for dev in device_list if dev.name != self.name]
 
     def send_packet(self, dst, dst_port, pkt_type, size):
+        global system_under_attack
+        
         dst_device = next((dev for dev in self.all_devices if dev.name == dst), None)
         
         if not dst_device:
@@ -122,7 +127,8 @@ class IoTDevice:
         
         if len(dst_device.queue) < dst_device.queue_size:
             dst_device.queue.append(pkt)
-            self.traffic_log.append(LogEntry.convert_to_log_entry(pkt, 'sent', self.infected, queue_full_percentage))
+            # Use system_under_attack flag instead of individual device infected status
+            self.traffic_log.append(LogEntry.convert_to_log_entry(pkt, 'sent', system_under_attack, queue_full_percentage))
             infection_marker = "[ATTACK]" if self.infected else ""
             # print(f"[{self.env.now:>5.2f}] {infection_marker} {self.name}:{src_port} sent {pkt_type} to {dst}:{dst_port} (size={size})")
         else:
@@ -130,6 +136,7 @@ class IoTDevice:
 
     def process_queue(self):
         """Processes packets from the queue, with server-specific responses."""
+        global system_under_attack
         while True:
             if self.queue:
                 # Calculate queue fullness before processing the packet
@@ -150,7 +157,8 @@ class IoTDevice:
                         # Send back a larger data response
                         self.send_packet(pkt.src, pkt.src_port, 'TCP', 1024)
                 
-                self.traffic_log.append(LogEntry.convert_to_log_entry(pkt, 'received', self.infected, queue_full_percentage))
+                # Use system_under_attack flag instead of individual device infected status
+                self.traffic_log.append(LogEntry.convert_to_log_entry(pkt, 'received', system_under_attack, queue_full_percentage))
                 # print(f"[{self.env.now:>5.2f}] {self.name} processed {pkt.type} from {pkt.src}:{pkt.src_port}")
             else:
                 yield self.env.timeout(0.05)
@@ -248,30 +256,58 @@ class IoTDevice:
             yield self.env.timeout(1) # Check infection status every second
 
 def infection_controller(env, devices, name_to_device):
-    """Controls the infection process and assigns attack tasks."""
-    yield env.timeout(40)
+    """Controls the infection process with repeating cycles of normal/attack periods."""
+    global system_under_attack
     
-    print(f"\n[{env.now:>5.2f}] *** INFECTION STARTED ***")
+    # Initial wait before starting the cycle
+    yield env.timeout(60)  # Start with 60 seconds of normal operation
     
     target_server = name_to_device['Server']
-    non_server_devices = [d for d in devices if d.name != 'Server']
-    infected_count = 2
-    infected_devices = random.sample(non_server_devices, infected_count)
+    cycle_count = 0
+    max_time = 6000  # Run for 6000 seconds
     
-    for device in infected_devices:
-        device.infected = True
-        device.attack_target = target_server
-        device.attack_mode = random.choice(['syn_flood','bursty']) # Assign the specific attack
-        print(f"[{env.now:>5.2f}] *** {device.name} INFECTED & TASKED WITH {device.attack_mode.upper()} ***")
-
-    yield env.timeout(15)  # Duration of the attack
+    # Run cycles until we reach max_time
+    while env.now < max_time:
+        cycle_count += 1
+        
+        # Start infection period (60 seconds)
+        print(f"\n[{env.now:>5.2f}] *** CYCLE {cycle_count}: INFECTION STARTED ***")
+        # Set the global flag to indicate system is under attack
+        system_under_attack = True
+        
+        # Select 2 random non-server devices to infect
+        non_server_devices = [d for d in devices if d.name != 'Server']
+        infected_count = 2
+        infected_devices = random.sample(non_server_devices, infected_count)
+        
+        # Infect the selected devices
+        for device in infected_devices:
+            device.infected = True
+            device.attack_target = target_server
+            device.attack_mode = random.choice(['syn_flood', 'bursty'])
+            print(f"[{env.now:>5.2f}] *** {device.name} INFECTED & TASKED WITH {device.attack_mode.upper()} ***")
+        
+        # Run the attack for 60 seconds
+        yield env.timeout(60)
+        
+        # End infection period
+        print(f"\n[{env.now:>5.2f}] *** CYCLE {cycle_count}: INFECTION ENDED - RETURNING TO NORMAL ***")
+        
+        # Reset the global flag to indicate system is not under attack
+        system_under_attack = False
+        
+        # Reset all devices to normal
+        for device in devices:
+            device.infected = False
+            device.attack_mode = None
+            device.attack_target = None
+        
+        # Normal period for 60 seconds (unless we've reached max_time)
+        if env.now < max_time:
+            print(f"[{env.now:>5.2f}] *** NORMAL OPERATION FOR 60 SECONDS ***")
+            yield env.timeout(60)
     
-    print(f"\n[{env.now:>5.2f}] *** INFECTION ENDED - RETURNING TO NORMAL ***")
-    
-    for device in devices:
-        device.infected = False
-        device.attack_mode = None
-        device.attack_target = None
+    print(f"\n[{env.now:>5.2f}] *** SIMULATION COMPLETE: {cycle_count} ATTACK CYCLES EXECUTED ***")
 
 
 # --- Simulation Setup ---
@@ -340,7 +376,7 @@ for device in devices:
 env.process(infection_controller(env, devices, name_to_device))
 
 # Run simulation
-env.run(until=2000)
+env.run(until=6000)  # Match the maximum time in infection_controller
 
 # Print logs
 # for device in name_to_device.values():
@@ -367,6 +403,8 @@ def export_logs_to_csv(devices, filename='network_logs.csv'):
         
         # Write data from all devices
         for device in devices.values():
+            # sort device.traffic_log by timestamp
+            device.traffic_log.sort(key=lambda log: log.timestamp)
             for log_entry in device.traffic_log:
                 row = [
                     device.name,

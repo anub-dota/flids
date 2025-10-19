@@ -16,7 +16,7 @@ class LightweightModel:
             penalty='l2',
             alpha=0.0001,
             random_state=42,
-            max_iter=1000,
+            max_iter=6000,
             tol=1e-3,
             warm_start=False  # We'll use partial_fit instead
         )
@@ -139,7 +139,7 @@ class GlobalModel:
                 penalty='l2',
                 alpha=0.0001,
                 random_state=42,
-                max_iter=1000,
+                max_iter=6000,
                 tol=1e-3,
                 warm_start=False
             )
