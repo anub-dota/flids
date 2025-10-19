@@ -88,15 +88,16 @@ class HeavyweightModel:
         
     def partial_fit(self, X, y):
         """Train incrementally on new data - true online learning"""
+        classes = np.array([0, 1])
         if not self.is_fitted:
             # First training - fit scaler and initialize model
             X_scaled = self.scaler.fit_transform(X)
-            self.model.partial_fit(X_scaled, y)
+            self.model.partial_fit(X_scaled, y, classes=classes)
             self.is_fitted = True
         else:
             # True incremental training - warm_start allows model to continue learning
             X_scaled = self.scaler.transform(X)
-            self.model.partial_fit(X_scaled, y)
+            self.model.partial_fit(X_scaled, y, classes=classes)
     
     def fit(self, X, y):
         """Train model on initial data"""
