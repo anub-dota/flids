@@ -170,7 +170,7 @@ class IoTDevice:
         while True:
             if not self.infected:
                 self.send_packet("Server", 443, 'UDP', 32)
-            yield self.env.timeout(random.uniform(15, 20))
+            yield self.env.timeout(random.uniform(20, 26))
 
     def run_datarequest_protocol(self):
         """2. Simulates a TCP-like handshake to request data from the server."""
@@ -179,33 +179,33 @@ class IoTDevice:
                 print(f"[{self.env.now:>5.2f}] {self.name} starting data request session.")
                 self.send_packet("Server", 8080, 'SYN', 60)
                 # In a real scenario, it would wait for SYN-ACK. We simplify here.
-                yield self.env.timeout(0.2)
+                yield self.env.timeout(0.5)
                 # Simulate requesting and receiving multiple data chunks
                 for _ in range(random.randint(1, 4)):
                     self.send_packet("Server", 8080, 'TCP', 128)
-                    yield self.env.timeout(random.uniform(0.3, 0.8))
+                    yield self.env.timeout(random.uniform(0.7, 1.2))
                 self.send_packet("Server", 8080, 'TCP', 60) #fin
-            yield self.env.timeout(random.uniform(25, 40))
+            yield self.env.timeout(random.uniform(30, 42))
 
     def run_udp_protocol(self):
         """3. Sends occasional, one-off UDP-like packets with generic data."""
         while True:
             if not self.infected:
                 self.send_packet("Server", 8080, 'UDP', random.randint(100, 256))
-            yield self.env.timeout(random.uniform(10, 15))
+            yield self.env.timeout(random.uniform(15, 20))
 
     def run_streaming_protocol(self):
         """4. Simulates a medium-flow video/audio stream for a short duration."""
         while True:
             # Long pause between streams
-            yield self.env.timeout(random.uniform(30, 50))
+            yield self.env.timeout(random.uniform(35, 58))
             if not self.infected:
                 print(f"[{self.env.now:>5.2f}] {self.name} starting media stream to Server.")
                 # Stream consists of many small, regularly-timed packets
                 for _ in range(random.randint(40, 80)):
                     if self.infected: break # Stop if infected mid-stream
                     self.send_packet("Server", 443, 'UDP', 1024)
-                    yield self.env.timeout(0.05) # Low jitter
+                    yield self.env.timeout(0.1) # Low jitter
     
     def run_p2p_chatter(self):
         """5. Sends random coordination packets to peers (works for both server and regular nodes)."""
@@ -215,20 +215,20 @@ class IoTDevice:
                 target_peer = random.choice(self.peers)
                 target_port = random.choice(list(target_peer.enabled_ports))
                 self.send_packet(target_peer.name, target_port, 'UDP', 64)
-            yield self.env.timeout(random.uniform(8, 18))
+            yield self.env.timeout(random.uniform(15, 24))
 
     def run_firmware_updates(self):
         """6. Initiates a high-traffic, short-duration firmware update to a random peer."""
         while True:
             # Updates are infrequent
-            yield self.env.timeout(random.uniform(50, 80))
+            yield self.env.timeout(random.uniform(55, 85))
             if not self.infected and self.peers:
                 target_peer = random.choice(self.peers)
                 print(f"[{self.env.now:>5.2f}] {self.name} starting firmware update to {target_peer.name}.")
                 # Send a burst of large packets
                 for i in range(20):
                     self.send_packet(target_peer.name, 443, 'TCP', 1400)
-                    yield self.env.timeout(0.02)
+                    yield self.env.timeout(0.05)
 
     # --- ATTACK LOGIC ---
     
@@ -260,8 +260,8 @@ def infection_controller(env, devices, name_to_device):
     global system_under_attack
     
     # Initial wait before starting the cycle
-    yield env.timeout(60)  # Start with 60 seconds of normal operation
-    
+    yield env.timeout(100)  # Start with 100 seconds of normal operation
+
     target_server = name_to_device['Server']
     cycle_count = 0
     max_time = 6000  # Run for 6000 seconds
@@ -286,9 +286,9 @@ def infection_controller(env, devices, name_to_device):
             device.attack_target = target_server
             device.attack_mode = random.choice(['syn_flood', 'bursty'])
             print(f"[{env.now:>5.2f}] *** {device.name} INFECTED & TASKED WITH {device.attack_mode.upper()} ***")
-        
-        # Run the attack for 60 seconds
-        yield env.timeout(60)
+
+        # Run the attack for 100 seconds
+        yield env.timeout(100)
         
         # End infection period
         print(f"\n[{env.now:>5.2f}] *** CYCLE {cycle_count}: INFECTION ENDED - RETURNING TO NORMAL ***")
@@ -302,10 +302,10 @@ def infection_controller(env, devices, name_to_device):
             device.attack_mode = None
             device.attack_target = None
         
-        # Normal period for 60 seconds (unless we've reached max_time)
+        # Normal period for 100 seconds (unless we've reached max_time)
         if env.now < max_time:
-            print(f"[{env.now:>5.2f}] *** NORMAL OPERATION FOR 60 SECONDS ***")
-            yield env.timeout(60)
+            print(f"[{env.now:>5.2f}] *** NORMAL OPERATION FOR 100 SECONDS ***")
+            yield env.timeout(100)
     
     print(f"\n[{env.now:>5.2f}] *** SIMULATION COMPLETE: {cycle_count} ATTACK CYCLES EXECUTED ***")
 
