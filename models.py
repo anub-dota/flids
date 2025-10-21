@@ -5,13 +5,16 @@ from sklearn.preprocessing import StandardScaler
 import pickle
 import copy
 
+light_size = (32, 16)
+heavy_size = (32, 24, 16)
+
 class LightweightModel:
     """MLPClassifier model for lightweight devices with true incremental learning"""
     
     def __init__(self, device_id):
         self.device_id = device_id
         self.model = MLPClassifier(
-            hidden_layer_sizes=(64, 32),
+            hidden_layer_sizes=light_size,
             random_state=42,
             max_iter=200,
             warm_start=False,  # Enable incremental learning
@@ -74,7 +77,7 @@ class HeavyweightModel:
     def __init__(self, device_id):
         self.device_id = device_id
         self.model = MLPClassifier(
-            hidden_layer_sizes=(64, 32),
+            hidden_layer_sizes=heavy_size,
             random_state=42,
             max_iter=200,
             warm_start=False,  # Enable incremental learning
@@ -135,14 +138,14 @@ class GlobalModel:
         self.model_type = model_type
         if model_type == 'lightweight':
             self.model = MLPClassifier(
-                hidden_layer_sizes=(64, 32),
+                hidden_layer_sizes=light_size,
                 random_state=42,
                 max_iter=200,
                 warm_start=False
             )
         else:
             self.model = MLPClassifier(
-                hidden_layer_sizes=(64, 32),
+                hidden_layer_sizes=heavy_size,
                 random_state=42,
                 max_iter=200,
                 warm_start=False

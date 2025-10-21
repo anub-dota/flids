@@ -29,8 +29,8 @@ def create_validation_dataset():
     
     for device_id in range(6):
         df = pd.read_csv(f'shuffled_data/peer_{device_id + 1}_datapts.csv')
-        # Sample 5% of data from each device
-        sampled_data = df.sample(frac=0.05, random_state=42)
+        # Sample 10% of data from each device
+        sampled_data = df.sample(frac=0.1, random_state=42)
         all_data.append(sampled_data)
     
     validation_data = pd.concat(all_data, ignore_index=True)
@@ -45,7 +45,7 @@ def get_feature_columns(num_sources=6):
                      If None, generates features without source aggregation (legacy behavior).
     """
     base_features = ['pkts', 'avg_pkt_size', 'pkt_size_var',  'tcp', 'udp']
-    time_windows = [ '30s', '15s', '5s']
+    time_windows = [ '30s', '10s', '5s']
     
     feature_cols = []
     

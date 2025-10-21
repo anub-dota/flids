@@ -132,14 +132,14 @@ class FederatedIntrustionDetection:
         # Update lightweight models
         for model in self.lightweight_models:
             local_weights = model.get_weights()
-            if local_weights is not None and global_heavy_weights is not None:
+            if local_weights is not None and global_light_weights is not None:
                 # 70% local + 30% global
                 updated_weights = {}
                 for key in local_weights:
                     if key in ['coefs', 'intercepts']:
                         updated_weights[key] = []
                         for layer_idx in range(len(local_weights[key])):
-                            layer_update = 0.8 * local_weights[key][layer_idx] + 0.2 * global_heavy_weights[key][layer_idx]
+                            layer_update = 0.15 * local_weights[key][layer_idx] + 0.85 * global_light_weights[key][layer_idx]
                             updated_weights[key].append(layer_update)
                 model.set_weights(updated_weights)
         
@@ -153,7 +153,7 @@ class FederatedIntrustionDetection:
                     if key in ['coefs', 'intercepts']:
                         updated_weights[key] = []
                         for layer_idx in range(len(local_weights[key])):
-                            layer_update = 0.8 * local_weights[key][layer_idx] + 0.2 * global_heavy_weights[key][layer_idx]
+                            layer_update = 0.15 * local_weights[key][layer_idx] + 0.85 * global_heavy_weights[key][layer_idx]
                             updated_weights[key].append(layer_update)
                 model.set_weights(updated_weights)
     
