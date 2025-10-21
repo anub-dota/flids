@@ -6,7 +6,7 @@ from models import LightweightModel, HeavyweightModel, GlobalModel
 class FederatedIntrustionDetection:
     """Main federated learning system"""
     
-    def __init__(self):
+    def __init__(self,light_local_weight:float, heavy_local_weight:float):
         # Initialize local models
         self.lightweight_models = [LightweightModel(i) for i in range(3)]
         self.heavyweight_models = [HeavyweightModel(i) for i in range(3, 6)]
@@ -14,6 +14,9 @@ class FederatedIntrustionDetection:
         # Initialize global models
         self.global_lightweight = GlobalModel('lightweight')
         self.global_heavyweight = GlobalModel('heavyweight')
+
+        self.light_local_weight = light_local_weight
+        self.heavy_local_weight = heavy_local_weight
         
         # Load validation data for knowledge transfer
         self.validation_data = self.load_or_create_validation_data()
@@ -41,12 +44,12 @@ class FederatedIntrustionDetection:
     
     def load_or_create_validation_data(self):
         """Load or create validation dataset"""
-        # try:
-        #     validation_data = pd.read_csv('data/validation_data.csv')
-        #     print("Loaded existing validation dataset")
-        # except FileNotFoundError:
-            # print("Creating validation dataset...")
-        validation_data = create_validation_dataset()
+        try:
+            validation_data = pd.read_csv('shuffled_data/validation_data.csv')
+            print("Loaded existing validation dataset")
+        except FileNotFoundError:
+            print("Creating validation dataset...")
+            validation_data = create_validation_dataset()
 
         print(f"validation_data shape: {validation_data.shape}")
         
@@ -54,8 +57,8 @@ class FederatedIntrustionDetection:
     
     def train_local_models(self, round_num):
         """Train local models for one round"""
-        start_time = round_num * 5
-        end_time = start_time + 5
+        start_time = round_num * 10
+        end_time = start_time + 10
         
         print(f"Training round {round_num + 1}: Time {start_time}-{end_time}s")
         
@@ -129,31 +132,30 @@ class FederatedIntrustionDetection:
         global_light_weights = self.global_lightweight.get_weights()
         global_heavy_weights = self.global_heavyweight.get_weights()
         
-        # Update lightweight models
+        # Update lightweight models (SGDClassifier)
         for model in self.lightweight_models:
             local_weights = model.get_weights()
             if local_weights is not None and global_light_weights is not None:
-                # 70% local + 30% global
-                updated_weights = {}
-                for key in local_weights:
-                    if key in ['coefs', 'intercepts']:
-                        updated_weights[key] = []
-                        for layer_idx in range(len(local_weights[key])):
-                            layer_update = 0.15 * local_weights[key][layer_idx] + 0.85 * global_light_weights[key][layer_idx]
-                            updated_weights[key].append(layer_update)
+                # 15% local + 85% global for SGDClassifier
+                updated_weights = {
+                    'coef': self.light_local_weight * local_weights['coef'] + (1 - self.light_local_weight) * global_light_weights['coef'],
+                    'intercept': self.light_local_weight * local_weights['intercept'] + (1 - self.light_local_weight) * global_light_weights['intercept'],
+                    'scaler_mean': self.light_local_weight * local_weights['scaler_mean'] + (1 - self.light_local_weight) * global_light_weights['scaler_mean'] if local_weights['scaler_mean'] is not None else global_light_weights['scaler_mean'],
+                    'scaler_scale': self.light_local_weight * local_weights['scaler_scale'] + (1 - self.light_local_weight) * global_light_weights['scaler_scale'] if local_weights['scaler_scale'] is not None else global_light_weights['scaler_scale']
+                }
                 model.set_weights(updated_weights)
         
-        # Update heavyweight models  
+        # Update heavyweight models (MLP)
         for model in self.heavyweight_models:
             local_weights = model.get_weights()
             if local_weights is not None and global_heavy_weights is not None:
-                # 70% local + 30% global
+                # 15% local + 85% global
                 updated_weights = {}
                 for key in local_weights:
                     if key in ['coefs', 'intercepts']:
                         updated_weights[key] = []
                         for layer_idx in range(len(local_weights[key])):
-                            layer_update = 0.15 * local_weights[key][layer_idx] + 0.85 * global_heavy_weights[key][layer_idx]
+                            layer_update = self.heavy_local_weight * local_weights[key][layer_idx] + (1 - self.heavy_local_weight) * global_heavy_weights[key][layer_idx]
                             updated_weights[key].append(layer_update)
                 model.set_weights(updated_weights)
     
@@ -281,10 +283,10 @@ class FederatedIntrustionDetection:
     def run_simulation(self, total_seconds=1000):
         """Run the complete federated learning simulation"""
         print(f"Starting federated learning simulation for {total_seconds} seconds...")
-        print(f"Total rounds: {total_seconds // 5}")
+        print(f"Total rounds: {total_seconds // 10}")
         print("=" * 50)
         
-        for round_num in range(total_seconds // 5):
+        for round_num in range(total_seconds // 10):
             # 1. Train local models on new data
             start_time, end_time, num_light_samples, num_heavy_samples = self.train_local_models(round_num)
             

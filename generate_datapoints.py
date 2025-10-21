@@ -9,7 +9,7 @@ def get_feature_columns(num_sources=6):
     """Return the feature column names"""
     base_features = ['pkts', 'avg_pkt_size', 'pkt_size_var', 'tcp', 'udp']
     time_windows = ['30s', '10s', '5s']
-    
+
     feature_cols = []
     
     # Features aggregated per source
@@ -190,7 +190,6 @@ def process_log_file(log_file_path, num_sources=6):
     
     # Define time windows in seconds
     time_windows = {
-        # '60s': 60,
         '30s': 30,
         '10s': 10,
         '5s': 5

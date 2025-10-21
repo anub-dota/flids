@@ -162,10 +162,18 @@ def main():
         print("\nERROR: Required data files not found.")
         print("Please run: python generate_datapoints.py")
         return
+
+    # for i in range(0, 10):
+    #     fed_system = FederatedIntrustionDetection(light_local_weight=i/10, heavy_local_weight=i/10)
+    #     history = fed_system.run_simulation(total_seconds=1000)
+    #     if history['round']:  # Only plot if we have data
+    #         plot_training_results(history)
+    #     else:
+    #         print("\nNo training data collected. Check if datapoint files have data in the time range.")
+    
     
     # Initialize and run federated learning system
-    fed_system = FederatedIntrustionDetection()
-    
+    fed_system = FederatedIntrustionDetection(0.95,0.95)
     # Run simulation (you can adjust total_seconds based on your data)
     history = fed_system.run_simulation(total_seconds=1000)  # Start with 1000 seconds for testing
 
