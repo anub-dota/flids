@@ -41,12 +41,14 @@ class FederatedIntrustionDetection:
     
     def load_or_create_validation_data(self):
         """Load or create validation dataset"""
-        try:
-            validation_data = pd.read_csv('data/validation_data.csv')
-            print("Loaded existing validation dataset")
-        except FileNotFoundError:
-            print("Creating validation dataset...")
-            validation_data = create_validation_dataset()
+        # try:
+        #     validation_data = pd.read_csv('data/validation_data.csv')
+        #     print("Loaded existing validation dataset")
+        # except FileNotFoundError:
+            # print("Creating validation dataset...")
+        validation_data = create_validation_dataset()
+
+        print(f"validation_data shape: {validation_data.shape}")
         
         return validation_data
     
@@ -112,7 +114,10 @@ class FederatedIntrustionDetection:
         light_predictions = self.global_lightweight.predict_for_knowledge_transfer(X_val)
         # Heavy -> Light: Heavyweight model teaches lightweight model
         heavy_predictions = self.global_heavyweight.predict_for_knowledge_transfer(X_val)
-        
+        assert len(X_val) == len(light_predictions), f" Validation size mismatch: {len(light_predictions)} vs {len(X_val)}"
+        assert y_val.shape == light_predictions.shape == heavy_predictions.shape, f"Shape mismatch: {y_val.shape}, {light_predictions.shape}, {heavy_predictions.shape}"
+
+
         # Train simultaneously to avoid update conflicts
         self.global_heavyweight.fit_from_teacher(X_val, light_predictions)
         self.global_lightweight.fit_from_teacher(X_val, heavy_predictions)
@@ -127,11 +132,15 @@ class FederatedIntrustionDetection:
         # Update lightweight models
         for model in self.lightweight_models:
             local_weights = model.get_weights()
-            if local_weights is not None and global_light_weights is not None:
+            if local_weights is not None and global_heavy_weights is not None:
                 # 70% local + 30% global
                 updated_weights = {}
                 for key in local_weights:
-                    updated_weights[key] = 0.8 * local_weights[key] + 0.2 * global_light_weights[key]
+                    if key in ['coefs', 'intercepts']:
+                        updated_weights[key] = []
+                        for layer_idx in range(len(local_weights[key])):
+                            layer_update = 0.8 * local_weights[key][layer_idx] + 0.2 * global_heavy_weights[key][layer_idx]
+                            updated_weights[key].append(layer_update)
                 model.set_weights(updated_weights)
         
         # Update heavyweight models  
@@ -168,14 +177,14 @@ class FederatedIntrustionDetection:
                 model_prec = precision_score(y_val, preds, zero_division=0)
                 model_rec = recall_score(y_val, preds, zero_division=0)
                 model_f1 = f1_score(y_val, preds, zero_division=0)
-                
+
                 # Add to metrics lists
                 light_accs.append(model_acc)
                 light_precs.append(model_prec)
                 light_recs.append(model_rec)
                 light_f1s.append(model_f1)
                 print(f"    Lightweight model {model.device_id}: acc={model_acc:.3f}, prec={model_prec:.3f}, rec={model_rec:.3f}, f1={model_f1:.3f}")
-        
+
         if light_accs:
             # Average the metrics across models
             light_acc = np.mean(light_accs)
@@ -269,7 +278,7 @@ class FederatedIntrustionDetection:
             if key in self.training_history:
                 self.training_history[key].append(value)
     
-    def run_simulation(self, total_seconds=6000):
+    def run_simulation(self, total_seconds=1000):
         """Run the complete federated learning simulation"""
         print(f"Starting federated learning simulation for {total_seconds} seconds...")
         print(f"Total rounds: {total_seconds // 5}")

@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
 def load_device_data_for_interval(device_id, start_time, end_time):
-    """Load data for a specific device and time interval
+    """Load data for a specific device and time interval based on row indices
     
     Args:
         device_id: Device ID (0-5 for peer_1 to peer_6)
@@ -12,11 +12,15 @@ def load_device_data_for_interval(device_id, start_time, end_time):
         end_time: End timestamp
     """
     # Map device_id to peer file (device 0 -> peer_1, device 1 -> peer_2, etc.)
-    df = pd.read_csv(f'data/peer_{device_id + 1}_datapts.csv')
-    
-    # Filter for the time interval
-    interval_data = df[(df['timestamp'] >= start_time) & (df['timestamp'] < end_time)]
-    
+    df = pd.read_csv(f'shuffled_data/peer_{device_id + 1}_datapts.csv')
+
+    # Calculate row indices based on start_time and end_time
+    start_idx = int(start_time * 2)
+    end_idx = int(end_time * 2)
+
+    # Select rows based on calculated indices
+    interval_data = df.iloc[start_idx:end_idx]
+
     return interval_data
 
 def create_validation_dataset():
@@ -24,13 +28,13 @@ def create_validation_dataset():
     all_data = []
     
     for device_id in range(6):
-        df = pd.read_csv(f'data/peer_{device_id + 1}_datapts.csv')
+        df = pd.read_csv(f'shuffled_data/peer_{device_id + 1}_datapts.csv')
         # Sample 5% of data from each device
         sampled_data = df.sample(frac=0.05, random_state=42)
         all_data.append(sampled_data)
     
     validation_data = pd.concat(all_data, ignore_index=True)
-    validation_data.to_csv('data/validation_data.csv', index=False)
+    validation_data.to_csv('shuffled_data/validation_data.csv', index=False)
     return validation_data
 
 def get_feature_columns(num_sources=6):
@@ -40,8 +44,8 @@ def get_feature_columns(num_sources=6):
         num_sources: Number of sources to generate features for. 
                      If None, generates features without source aggregation (legacy behavior).
     """
-    base_features = ['pkts', 'avg_pkt_size', 'pkt_size_var', 'syn', 'ack', 'tcp', 'udp']
-    time_windows = ['60s', '30s', '15s', '5s']
+    base_features = ['pkts', 'avg_pkt_size', 'pkt_size_var',  'tcp', 'udp']
+    time_windows = [ '30s', '15s', '5s']
     
     feature_cols = []
     

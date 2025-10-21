@@ -264,7 +264,7 @@ def infection_controller(env, devices, name_to_device):
 
     target_server = name_to_device['Server']
     cycle_count = 0
-    max_time = 6000  # Run for 6000 seconds
+    max_time = 1000  # Run for 1000 seconds
     
     # Run cycles until we reach max_time
     while env.now < max_time:
@@ -376,7 +376,7 @@ for device in devices:
 env.process(infection_controller(env, devices, name_to_device))
 
 # Run simulation
-env.run(until=6000)  # Match the maximum time in infection_controller
+env.run(until=1000)  # Match the maximum time in infection_controller
 
 # Print logs
 # for device in name_to_device.values():
