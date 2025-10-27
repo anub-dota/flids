@@ -1,0 +1,36 @@
+FEDERATED LEARNING TRAINING SUMMARY
+================================================================================
+
+Total Training Rounds: 100
+Time Range: 0s - 1000s
+
+================================================================================
+FINAL PERFORMANCE METRICS
+================================================================================
+
+Lightweight Models:
+  - Final Accuracy:  0.8429
+  - Final Precision: 0.9343
+  - Final Recall:    0.7751
+  - Final F1 Score:  0.8464
+  - Peak Accuracy:   0.8657 (Round 95)
+
+Heavyweight Models:
+  - Final Accuracy:  0.8440
+  - Final Precision: 0.9336
+  - Final Recall:    0.7771
+  - Final F1 Score:  0.8480
+  - Peak Accuracy:   0.8504 (Round 90)
+
+================================================================================
+TRAINING STATISTICS
+================================================================================
+
+Average Lightweight Samples per Round: 60
+Average Heavyweight Samples per Round: 60
+Total Lightweight Samples: 5958
+Total Heavyweight Samples: 5994
+
+Knowledge Transfer:
+  - Final Light→Heavy Agreement: 0.8866
+  - Final Heavy→Light Agreement: 0.8866

@@ -1,0 +1,4 @@
+- decrease in loss ka plot 
+- accuracy increase in both lightweight and heavyweight,local and global 
+- EDA statistics about the dataset and necessary plots. on preshuffled data
+- recall wagerah

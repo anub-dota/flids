@@ -425,7 +425,7 @@ def export_logs_to_csv(devices, filename='network_logs.csv'):
     return filepath
 
 # Export all logs to a single CSV file (all devices combined)
-csv_file = export_logs_to_csv(name_to_device)
+# csv_file = export_logs_to_csv(name_to_device)
 
 # Export individual device logs to separate files (one file per device)
 for device_name, device in name_to_device.items():

@@ -1,0 +1,43 @@
+SHUFFLED DATAPOINTS ANALYSIS SUMMARY
+================================================================================
+
+Total Datapoints: 11,958
+Total Devices: 6
+Total Features: 126
+Time Range: 0.50s - 999.50s
+
+Label Distribution:
+  - Normal: -17,890 (-149.61%)
+  - Attack: 5,932 (49.61%)
+
+Per-Device Statistics:
+
+  peer_6:
+    - Total Datapoints: 1,980
+    - Attack Datapoints: 969
+    - Attack %: 48.94%
+
+  peer_5:
+    - Total Datapoints: 1,999
+    - Attack Datapoints: 1,034
+    - Attack %: 51.73%
+
+  peer_1:
+    - Total Datapoints: 1,999
+    - Attack Datapoints: 1,017
+    - Attack %: 50.88%
+
+  peer_3:
+    - Total Datapoints: 1,991
+    - Attack Datapoints: 997
+    - Attack %: 50.08%
+
+  peer_2:
+    - Total Datapoints: 1,999
+    - Attack Datapoints: 990
+    - Attack %: 49.52%
+
+  peer_4:
+    - Total Datapoints: 1,990
+    - Attack Datapoints: 925
+    - Attack %: 46.48%

@@ -1,0 +1,62 @@
+DEVICE LOGS ANALYSIS SUMMARY
+================================================================================
+
+Total Packets: 26,117
+Total Devices: 7
+Time Range: 0.00s - 999.99s
+Duration: 999.99s
+
+Attack Statistics:
+  - Attack Packets: 18,995
+  - Normal Packets: 7,122
+  - Attack Percentage: 72.73%
+
+Packet Statistics:
+  - Average Size: 338.47 bytes
+  - Min Size: 32 bytes
+  - Max Size: 1400 bytes
+  - Std Dev: 428.65 bytes
+
+Per-Device Statistics:
+
+  peer_2:
+    - Total Packets: 3,313
+    - Attack Packets: 2,517
+    - Sent: 2,220
+    - Received: 1,093
+
+  peer_6:
+    - Total Packets: 3,007
+    - Attack Packets: 2,014
+    - Sent: 2,102
+    - Received: 905
+
+  peer_4:
+    - Total Packets: 3,187
+    - Attack Packets: 2,678
+    - Sent: 1,736
+    - Received: 1,451
+
+  peer_1:
+    - Total Packets: 1,862
+    - Attack Packets: 965
+    - Sent: 1,557
+    - Received: 305
+
+  peer_3:
+    - Total Packets: 1,398
+    - Attack Packets: 1,198
+    - Sent: 602
+    - Received: 796
+
+  Server:
+    - Total Packets: 11,953
+    - Attack Packets: 8,419
+    - Sent: 4,276
+    - Received: 7,677
+
+  peer_5:
+    - Total Packets: 1,397
+    - Attack Packets: 1,204
+    - Sent: 670
+    - Received: 727
