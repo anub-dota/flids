@@ -173,7 +173,7 @@ def main():
     
     
     # Initialize and run federated learning system
-    fed_system = FederatedIntrustionDetection(0.95,0.95)
+    fed_system = FederatedIntrustionDetection(0.9,0.9)
     # Run simulation (you can adjust total_seconds based on your data)
     history = fed_system.run_simulation(total_seconds=1000)  # Start with 1000 seconds for testing
 

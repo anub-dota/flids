@@ -156,7 +156,10 @@ class GlobalModel:
                 hidden_layer_sizes=heavy_size,
                 random_state=42,
                 max_iter=1000,
-                warm_start=False
+                warm_start=False,
+                early_stopping=False,  # Disable early stopping for incremental learning
+                learning_rate_init=0.001,
+                alpha=0.0001  # L2 regularization
             )
         self.scaler = StandardScaler()
         self.is_fitted = False
